@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>234</width>
-    <height>197</height>
+    <width>200</width>
+    <height>221</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,6 +31,9 @@
        <bold>true</bold>
       </font>
      </property>
+     <property name="layoutDirection">
+      <enum>Qt::LayoutDirection::LeftToRight</enum>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Shape::Box</enum>
      </property>
@@ -43,17 +46,15 @@
      <property name="text">
       <string>Авторизация</string>
      </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLineEdit" name="login_input">
-     <property name="font">
-      <font>
-       <pointsize>14</pointsize>
-      </font>
-     </property>
+   <item row="4" column="0">
+    <widget class="QPushButton" name="guest_button">
      <property name="text">
-      <string>Логин</string>
+      <string>Войти как гость</string>
      </property>
     </widget>
    </item>
@@ -67,6 +68,9 @@
      <property name="text">
       <string>Пароль</string>
      </property>
+     <property name="echoMode">
+      <enum>QLineEdit::EchoMode::Password</enum>
+     </property>
     </widget>
    </item>
    <item row="3" column="0">
@@ -76,10 +80,22 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QPushButton" name="gues_button">
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="username_input">
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
      <property name="text">
-      <string>Войти как гость</string>
+      <string>Логин</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="error_label">
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>
