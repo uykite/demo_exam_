@@ -1,7 +1,7 @@
 from database import get_connection
 from psycopg2.extras import RealDictCursor
 
-def get_products(search=""):
+def get_products(search="", category=None):
     connection = get_connection()
 
     try:
@@ -28,12 +28,15 @@ def get_products(search=""):
                 JOIN suppliers
                     ON products.supplier_id = suppliers.id
                 WHERE
+                (
                     products.name ILIKE %s
                     OR categories.name ILIKE %s
                     OR products.description ILIKE %s
                     OR manufacturers.name ILIKE %s
                     OR suppliers.name ILIKE %s
                     OR products.unit ILIKE %s
+                )
+                AND (%s IS NULL OR categories.id = %s)
                 ORDER BY products.id
                 """,
                 (
@@ -42,10 +45,29 @@ def get_products(search=""):
                     f"%{search}%",
                     f"%{search}%",
                     f"%{search}%",
-                    f"%{search}%"
+                    f"%{search}%",
+                    category,
+                    category
                 )
             )
 
             return cursor.fetchall()
+    finally:
+        connection.close()
+        
+def get_categories():
+    connection=get_connection()
+    
+    try:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT id,name
+                FROM categories
+                ORDER BY name
+                """
+            )
+            return cursor.fetchall()
+        
     finally:
         connection.close()

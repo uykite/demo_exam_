@@ -14,11 +14,12 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QTableWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QComboBox
 )
 
 
-from products import get_products
+from products import get_products, get_categories
 from auth import get_user, check_password
 
 
@@ -83,6 +84,11 @@ class MainWindow(QMainWindow):
             QLineEdit,
             "search_input"
         )
+        
+        self.category_filter = self.products_window.findChild(
+            QComboBox,
+            "category_filter"
+        )
 
         self.stack.addWidget(self.login_window)
         self.stack.addWidget(self.products_window)
@@ -96,8 +102,28 @@ class MainWindow(QMainWindow):
         self.guest_button.clicked.connect(
             self.login_as_guest
         )
+        self.load_categories()
         self.search_input.textChanged.connect(self.load_products)
+        self.category_filter.currentIndexChanged.connect(
+            self.load_products
+        )
 
+
+    def load_categories(self):
+        try:
+            categories = get_categories()
+            
+            self.category_filter.clear()
+            self.category_filter.addItem("Все категории", None)
+            
+            for category in categories:
+                self.category_filter.addItem(
+                    category["name"],
+                    category['id']
+                )
+        except Exception as e:
+            print("Ощибка загрузик категорий",e)
+            
     def login(self):
         username = self.username_input.text().strip()
         password = self.password_input.text()
@@ -166,9 +192,15 @@ class MainWindow(QMainWindow):
     def load_products(self):
         try:
             search = self.search_input.text().strip()
-            products = get_products(search)
+            category = self.category_filter.currentData()
+            
+            print("Поиск:", search)
+            print("Категория:", category)
+            
+            products = get_products(search, category)
             
             self.products_table.setRowCount(0)
+        
             
             for product in products:
                 row = self.products_table.rowCount()
@@ -261,7 +293,7 @@ class MainWindow(QMainWindow):
                         self.products_table.item(row,column).setBackground(
                             QColor("#87CEEB")
                         )
-                if product["discount"] > 15:
+                elif product["discount"] > 15:
                     for column in range(10):
                         self.products_table.item(row,column).setBackground(
                             QColor("#2E8B57")
