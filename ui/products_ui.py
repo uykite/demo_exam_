@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setWindowModality(Qt.WindowModality.WindowModal)
-        MainWindow.resize(1041, 418)
+        MainWindow.resize(647, 299)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -39,6 +39,11 @@ class Ui_MainWindow(object):
         self.header_widget.setMaximumSize(QSize(16777215, 40))
         self.horizontalLayout = QHBoxLayout(self.header_widget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.logout_button = QPushButton(self.header_widget)
+        self.logout_button.setObjectName(u"logout_button")
+
+        self.horizontalLayout.addWidget(self.logout_button)
+
         self.title_label = QLabel(self.header_widget)
         self.title_label.setObjectName(u"title_label")
         font = QFont()
@@ -154,6 +159,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        self.logout_button.setText(QCoreApplication.translate("MainWindow", u"\u0412\u044b\u0439\u0442\u0438", None))
         self.title_label.setText(QCoreApplication.translate("MainWindow", u"\u0422\u043e\u0432\u0430\u0440\u044b", None))
         self.user_label.setText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c", None))
         self.search_input.setPlaceholderText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0438\u0441\u043a \u0442\u043e\u0432\u0430\u0440\u043e\u0432...", None))

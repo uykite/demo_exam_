@@ -1,13 +1,24 @@
 from database import get_connection
 from psycopg2.extras import RealDictCursor
 
-def get_products(search="", category=None):
+def get_products(search="", category=None,sort="Без сортировки"):
     connection = get_connection()
+    if sort =="Название":
+        order = "products.name"
+    elif sort == "Цена":
+        order = "products.price"
+    elif sort == "Остаток":
+        order = "products.stock_quantity"
+    elif sort == "Скидка":
+        order = "products.discount"
+    else:
+        order = "products.id"
+    
 
     try:
         with connection.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute(
-                """
+                f"""
                 SELECT
                     products.id,
                     products.name,
@@ -37,7 +48,7 @@ def get_products(search="", category=None):
                     OR products.unit ILIKE %s
                 )
                 AND (%s IS NULL OR categories.id = %s)
-                ORDER BY products.id
+                ORDER BY {order}
                 """,
                 (
                     f"%{search}%",
@@ -69,5 +80,92 @@ def get_categories():
             )
             return cursor.fetchall()
         
+    finally:
+        connection.close()
+        
+def get_manufactures():
+    connection = get_connection()
+    
+    try:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT id,name
+                FROM manufacturers
+                ORDER BY name
+                """                
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
+        
+
+def get_suppliers():
+    connection = get_connection()
+    try:
+        with connection.cursor(cursor_factory = RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT id,name
+                FROM suppliers
+                ORDER BY name
+                """
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()            
+        
+def add_product(
+    name,
+    category_id,
+    description,
+    manufacturer_id,
+    supplier_id,
+    price,
+    unit,
+    stock_quantity,
+    discount,
+    image_path
+):
+    connection = get_connection()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO products (
+                    name,
+                    category_id,
+                    description,
+                    manufacturer_id,
+                    supplier_id,
+                    price,
+                    unit,
+                    stock_quantity,
+                    discount,
+                    image_path
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    name,
+                    category_id,
+                    description,
+                    manufacturer_id,
+                    supplier_id,
+                    price,
+                    unit,
+                    stock_quantity,
+                    discount,
+                    image_path
+                )
+            )
+
+        connection.commit()
+
+    except Exception:
+        connection.rollback()
+        raise
+
     finally:
         connection.close()
