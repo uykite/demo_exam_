@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.setWindowModality(Qt.WindowModality.WindowModal)
-        MainWindow.resize(647, 299)
+        MainWindow.resize(831, 334)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -81,7 +81,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.category_filter)
 
+        self.supplier_filter = QComboBox(self.filters_widget)
+        self.supplier_filter.setObjectName(u"supplier_filter")
+
+        self.horizontalLayout_2.addWidget(self.supplier_filter)
+
         self.sort_combo = QComboBox(self.filters_widget)
+        self.sort_combo.addItem("")
         self.sort_combo.addItem("")
         self.sort_combo.addItem("")
         self.sort_combo.addItem("")
@@ -165,11 +171,13 @@ class Ui_MainWindow(object):
         self.search_input.setPlaceholderText(QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0438\u0441\u043a \u0442\u043e\u0432\u0430\u0440\u043e\u0432...", None))
         self.category_filter.setItemText(0, QCoreApplication.translate("MainWindow", u"\u0412\u0441\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438", None))
 
+        self.supplier_filter.setCurrentText("")
         self.sort_combo.setItemText(0, QCoreApplication.translate("MainWindow", u"\u0411\u0435\u0437 \u0441\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0438", None))
         self.sort_combo.setItemText(1, QCoreApplication.translate("MainWindow", u"\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435", None))
         self.sort_combo.setItemText(2, QCoreApplication.translate("MainWindow", u"\u0426\u0435\u043d\u0430", None))
-        self.sort_combo.setItemText(3, QCoreApplication.translate("MainWindow", u"\u041e\u0441\u0442\u0430\u0442\u043e\u043a", None))
-        self.sort_combo.setItemText(4, QCoreApplication.translate("MainWindow", u"\u0421\u043a\u0438\u0434\u043a\u0430", None))
+        self.sort_combo.setItemText(3, QCoreApplication.translate("MainWindow", u"\u041e\u0441\u0442\u0430\u0442\u043e\u043a(\u043f\u043e \u0443\u0431\u044b\u0432\u0430\u043d\u0438\u044e)", None))
+        self.sort_combo.setItemText(4, QCoreApplication.translate("MainWindow", u"\u041e\u0441\u0442\u0430\u0442\u043e\u043a(\u043f\u043e \u0432\u043e\u0437\u0440\u0430\u0441\u0442\u0430\u043d\u0438\u044e)", None))
+        self.sort_combo.setItemText(5, QCoreApplication.translate("MainWindow", u"\u0421\u043a\u0438\u0434\u043a\u0430", None))
 
         ___qtablewidgetitem = self.products_table.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435", None))

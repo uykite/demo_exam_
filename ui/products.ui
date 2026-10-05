@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>647</width>
-    <height>299</height>
+    <width>831</width>
+    <height>334</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,6 +99,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QComboBox" name="supplier_filter">
+            <property name="currentText">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QComboBox" name="sort_combo">
             <item>
              <property name="text">
@@ -117,7 +124,12 @@
             </item>
             <item>
              <property name="text">
-              <string>Остаток</string>
+              <string>Остаток(по убыванию)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Остаток(по возрастанию)</string>
              </property>
             </item>
             <item>

@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 
-from products import get_products, get_categories, get_manufactures, get_suppliers, add_product
+from products import get_products, get_categories, get_manufactures, get_suppliers, add_product, get_product, update_product
 from auth import get_user, check_password
 
 
@@ -51,6 +51,8 @@ class MainWindow(QMainWindow):
         products_path = project_path / "ui" / "products.ui"
         add_product_path = project_path/ "ui" / "add_product.ui"
         self.selected_image_path = None
+        self.editing_product_image_path = None
+        self.editing_product_id = None
         self.login_window = load_ui(login_path)
         self.products_window = load_ui(products_path)
         self.add_product_window = load_ui(add_product_path)
@@ -188,6 +190,11 @@ class MainWindow(QMainWindow):
             "delete_product_button"
         )
         
+        self.supplier_filter = self.products_window.findChild(
+            QComboBox,
+            "supplier_filter"
+        )
+        
 
         self.stack.addWidget(self.login_window)
         self.stack.addWidget(self.products_window)
@@ -197,6 +204,7 @@ class MainWindow(QMainWindow):
         self.login_button.clicked.connect(self.login)
         self.guest_button.clicked.connect(self.login_as_guest)
         self.load_categories()
+        self.load_supplier()
         self.search_input.textChanged.connect(self.load_products)
         self.category_filter.currentIndexChanged.connect(self.load_products)
         self.sort_combo.currentIndexChanged.connect(self.load_products)
@@ -205,6 +213,8 @@ class MainWindow(QMainWindow):
         self.product_cancel_button.clicked.connect(self.add_product_window.close)
         self.product_image_button.clicked.connect(self.select_image)
         self.logout_button.clicked.connect(self.logout)
+        self.supplier_filter.currentIndexChanged.connect(self.load_products)
+        self.edit_product_button.clicked.connect(self.open_edit_product)
 
     def logout(self):
         self.current_user = None
@@ -310,51 +320,83 @@ class MainWindow(QMainWindow):
             print("Ошибка: скидка должна быть от 0 до 100")
             return
 
-        # Пока изображение не подключали
-        # ПОЯСНИТЬ В ЧАТЕ ГПТ
-        image_path = None
+
+        image_path = self.editing_product_image_path
 
         if self.selected_image_path:
             images_folder = Path(__file__).parent / "images"
             images_folder.mkdir(exist_ok=True)
 
             source_path = Path(self.selected_image_path)
-
             image_name = source_path.name
 
-
+            destination_path = images_folder / image_name
+            shutil.copy2(source_path, destination_path)
 
             image_path = f"images/{image_name}"
-        #КОНЕЦ ПОЯСНЕНИЯ
         try:
-            add_product(
-                name,
-                category_id,
-                description,
-                manufacturer_id,
-                supplier_id,
-                price,
-                unit,
-                stock_quantity,
-                discount,
-                image_path
-            )
-
-            print("Товар успешно добавлен")
-
+            if self.editing_product_id is None:
+                add_product(
+                    name,
+                    category_id,
+                    description,
+                    manufacturer_id,
+                    supplier_id,
+                    price,
+                    unit,
+                    stock_quantity,
+                    discount,
+                    image_path
+                )
+                print("Успешно добавлено")
+            else:
+                update_product(
+                    self.editing_product_id,
+                    name,
+                    category_id,
+                    description,
+                    manufacturer_id,
+                    supplier_id,
+                    price,
+                    unit,
+                    stock_quantity,
+                    discount,
+                    image_path
+                )
+                print("Товар успешно изменен")
+                if self.selected_image_path and self.editing_product_image_path:
+                    old_image = Path(__file__).parent / self.editing_product_image_path
+                    
+                    if old_image.exists() and old_image != Path(__file__).parent/image_path:
+                        old_image.unlink()
+                        
+                        
             self.add_product_window.close()
             self.load_products()
-
+    
         except Exception as e:
-            print("Ошибка при добавлении товара:", e)
+            import traceback
+            print("Ошибка при сохранении товара:", e)
+            traceback.print_exc() 
         
 
     def open_add_product(self):
+        self.editing_product_id = None
         self.selected_image_path = None
+
+        self.add_product_window.setWindowTitle("Добавление товара")
         self.product_image_label.clear()
         self.product_image_label.setText("Изображение не выбрано")
 
+        self.product_name_input.clear()
+        self.product_description_input.clear()
+        self.product_price_input.clear()
+        self.product_unit_input.clear()
+        self.product_stock_input.clear()
+        self.product_discount_input.clear()
+
         self.load_product_form_data()
+
         self.add_product_window.show()
 
     def load_product_form_data(self):
@@ -387,7 +429,21 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print("Error",e)
     
+    
+    def load_supplier(self):
+        self.supplier_filter.clear()
+        self.supplier_filter.addItem("Все поставщики",None)
 
+        suppliers = get_suppliers()
+        
+        for supplier in suppliers:
+            self.supplier_filter.addItem(
+                supplier["name"],
+                supplier["id"]
+            )
+        
+        
+        
     def load_categories(self):
         try:
             categories = get_categories()
@@ -481,6 +537,7 @@ class MainWindow(QMainWindow):
         self.search_input.setEnabled(is_admin or is_manager)
         self.category_filter.setEnabled(is_admin or is_manager)
         self.sort_combo.setEnabled(is_admin or is_manager)
+        self.supplier_filter.setEnabled(is_admin or is_manager)
 
         self.add_product_button.setVisible(is_admin)
         self.edit_product_button.setVisible(is_admin)
@@ -489,15 +546,13 @@ class MainWindow(QMainWindow):
     def load_products(self):
         try:
             search = self.search_input.text().strip()
-            category = self.category_filter.currentData()
-            
-            print("Поиск:", search)
-            print("Категория:", category)
-            
+            category = self.category_filter.currentData()   
+            supplier = self.supplier_filter.currentData()       
             sort = self.sort_combo.currentText()
             products = get_products(
                 search,
                 category,
+                supplier,
                 sort
             )
             
@@ -510,29 +565,31 @@ class MainWindow(QMainWindow):
                 
                 #ПОЯСНИТЬ ЧАТОМ ГПТ
                 item = QTableWidgetItem()
+                item.setData(Qt.UserRole,product["id"])
+
+                image_path = None
 
                 if product["image_path"]:
                     image_path = Path(__file__).parent / product["image_path"]
 
-                    pixmap = QPixmap(str(image_path))
+                # Если изображения нет или оно не найдено,
+                # используем изображение-заглушку
+                if image_path is None or not image_path.exists():
+                    image_path = Path(__file__).parent / "images" / "not_found.jpg"
 
-                    if not pixmap.isNull():
-                        pixmap = pixmap.scaled(
-                            100,
-                            70,
-                            Qt.KeepAspectRatio,
-                            Qt.SmoothTransformation
-                        )
+                pixmap = QPixmap(str(image_path))
 
-                        item.setData(
-                            Qt.DecorationRole,
-                            pixmap
-                        )
-                self.products_table.setItem(
-                    row,
-                    0,
-                    item
-                )
+                if not pixmap.isNull():
+                    pixmap = pixmap.scaled(
+                        100,
+                        70,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+
+                    item.setData(Qt.DecorationRole, pixmap)
+
+                self.products_table.setItem(row, 0, item)
                 #ПОЯСНИТЬ ЧАТОМ ГПТ
                 
                 self.products_table.setItem(
@@ -570,12 +627,34 @@ class MainWindow(QMainWindow):
                     )
                 )
                 
-                self.products_table.setItem(
-                    row,6,
-                    QTableWidgetItem(
-                        str(product["price"])
+                price = float(product["price"])
+                discount = float(product["discount"])
+
+                if discount > 0:
+                    discounted_price = price * (1 - discount / 100)
+
+                    price_label = QLabel()
+                    price_label.setText(
+                        f"""
+                        <span style="color:red; text-decoration:line-through;">
+                            {price:.2f}
+                        </span>
+                        <br>
+                        <span style="color:black;">
+                            {discounted_price:.2f}
+                        </span>
+                        """
                     )
-                )
+
+                    self.products_table.setCellWidget(row, 6, price_label)
+
+                else:
+                    self.products_table.setItem(
+                        row,
+                        6,
+                        QTableWidgetItem(f"{price:.2f}")
+                    )
+                            
                 
                 self.products_table.setItem(
                     row,7,
@@ -600,19 +679,109 @@ class MainWindow(QMainWindow):
                 
                 if product["stock_quantity"] == 0:
                     for column in range(10):
-                        self.products_table.item(row,column).setBackground(
-                            QColor("#87CEEB")
+                        item = self.products_table.item(row, column)
+
+                        if item is not None:
+                            item.setBackground(QColor("#87CEEB"))
+
+                    price_widget = self.products_table.cellWidget(row, 6)
+
+                    if price_widget is not None:
+                        price_widget.setStyleSheet(
+                            "background-color: #87CEEB;"
                         )
+
                 elif product["discount"] > 15:
                     for column in range(10):
-                        self.products_table.item(row,column).setBackground(
-                            QColor("#2E8B57")
+                        item = self.products_table.item(row, column)
+
+                        if item is not None:
+                            item.setBackground(QColor("#2E8B57"))
+
+                    price_widget = self.products_table.cellWidget(row, 6)
+
+                    if price_widget is not None:
+                        price_widget.setStyleSheet(
+                            "background-color: #2E8B57;"
                         )
-                
                 
         except Exception as e:
             print("Error: ", e)
+            
+    def open_edit_product(self):
+        row = self.products_table.currentRow()
+        
+        if row < 0 :
+            print("Ошибка: товар не найден")
+            return
+        
+        item = self.products_table.item(row,0)
+        
+        if item is None:
+            print("Ошибка не удалосьб определить товар")
+            return
+        
+        product_id = item.data(Qt.UserRole)
+        
+        try:
+            product = get_product(product_id)
+            if product is None:
+                print("Товар не найден")
+                return
+            
+            self.editing_product_id = product_id
+            self.selected_image_path = None
+            self.editing_product_image_path = product["image_path"]
+            
+            self.add_product_window.setWindowTitle("Редактирование товара")
+            self.product_image_label.setText("Изображение не выбрано")
+            self.product_image_label.clear()
+            
+            self.load_product_form_data()
+            
+            self.product_name_input.setText(product["name"])
+            self.product_description_input.setPlainText(str(product["description"]))
+            
+            self.product_price_input.setText(str(product["price"]))
+            self.product_unit_input.setText(product["unit"])
+            self.product_stock_input.setText(str(product["stock_quantity"]))
+            
+            self.product_discount_input.setText(str(product["discount"]))
+            self.product_category_combo.setCurrentIndex(
+                self.product_category_combo.findData(
+                    product["category_id"]
+                )
+            )
+            self.product_manufacturer_combo.setCurrentIndex(
+                self.product_manufacturer_combo.findData(
+                    product["manufacturer_id"]
+                )
+            )
+            self.product_supplier_combo.setCurrentIndex(
+                self.product_supplier_combo.findData(
+                    product["supplier_id"]
+                )
+            )
+            
+            if product["image_path"]:
+                image_path = Path(__file__).parent / product["image_path"]
 
+                if image_path.exists():
+                    pixmap = QPixmap(str(image_path))
+                    pixmap = pixmap.scaled(
+                        300,
+                        200,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+
+                    self.product_image_label.setPixmap(pixmap)
+                    self.product_image_label.setText("")
+
+            self.add_product_window.show()
+            
+        except Exception as e:
+            print("Ошибка при открытии товара",e)
 
 def main():
     app = QApplication(sys.argv)
