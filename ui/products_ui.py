@@ -150,6 +150,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.delete_product_button)
 
+        self.orders_button = QPushButton(self.actions_widget)
+        self.orders_button.setObjectName(u"orders_button")
+
+        self.horizontalLayout_3.addWidget(self.orders_button)
+
 
         self.verticalLayout.addWidget(self.actions_widget)
 
@@ -202,5 +207,6 @@ class Ui_MainWindow(object):
         self.add_product_button.setText(QCoreApplication.translate("MainWindow", u"\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u0442\u043e\u0432\u0430\u0440", None))
         self.edit_product_button.setText(QCoreApplication.translate("MainWindow", u"\u0418\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u043e\u0432\u0430\u0440", None))
         self.delete_product_button.setText(QCoreApplication.translate("MainWindow", u"\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0442\u043e\u0432\u0430\u0440", None))
+        self.orders_button.setText(QCoreApplication.translate("MainWindow", u"\u0417\u0430\u043a\u0430\u0437\u044b", None))
     # retranslateUi
 

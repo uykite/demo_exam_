@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>200</width>
-    <height>221</height>
+    <width>385</width>
+    <height>292</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -66,10 +66,13 @@
       </font>
      </property>
      <property name="text">
-      <string>Пароль</string>
+      <string/>
      </property>
      <property name="echoMode">
       <enum>QLineEdit::EchoMode::Password</enum>
+     </property>
+     <property name="placeholderText">
+      <string>password...</string>
      </property>
     </widget>
    </item>
@@ -88,7 +91,10 @@
       </font>
      </property>
      <property name="text">
-      <string>Логин</string>
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>login...</string>
      </property>
     </widget>
    </item>

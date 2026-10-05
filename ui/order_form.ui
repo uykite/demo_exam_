@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OrderFormDialog</class>
+ <widget class="QDialog" name="OrderFormDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Добавление заказа</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="title_label">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Добавление заказа</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="product_label">
+     <property name="text">
+      <string>Артикул:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="product_combo"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="status_label">
+     <property name="text">
+      <string>Статус заказа:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="status_combo"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="pickup_point_label">
+     <property name="text">
+      <string>Адрес пункта выдачи:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="pickup_point_combo"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="order_date_label">
+     <property name="text">
+      <string>Дата заказа:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDateEdit" name="order_date_input">
+     <property name="calendarPopup">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="pickup_date_label">
+     <property name="text">
+      <string>Дата выдачи:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDateEdit" name="pickup_date_input">
+     <property name="calendarPopup">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttons_layout">
+     <item>
+      <widget class="QPushButton" name="save_order_button">
+       <property name="text">
+        <string>Сохранить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancel_order_button">
+       <property name="text">
+        <string>Отмена</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

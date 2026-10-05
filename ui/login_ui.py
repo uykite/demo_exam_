@@ -24,7 +24,7 @@ class Ui_Dialog(object):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
         Dialog.setWindowModality(Qt.WindowModality.WindowModal)
-        Dialog.resize(200, 221)
+        Dialog.resize(385, 292)
         Dialog.setSizeGripEnabled(True)
         Dialog.setModal(True)
         self.gridLayout = QGridLayout(Dialog)
@@ -83,9 +83,11 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
         self.label.setText(QCoreApplication.translate("Dialog", u"\u0410\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u044f", None))
         self.guest_button.setText(QCoreApplication.translate("Dialog", u"\u0412\u043e\u0439\u0442\u0438 \u043a\u0430\u043a \u0433\u043e\u0441\u0442\u044c", None))
-        self.password_input.setText(QCoreApplication.translate("Dialog", u"\u041f\u0430\u0440\u043e\u043b\u044c", None))
+        self.password_input.setText("")
+        self.password_input.setPlaceholderText(QCoreApplication.translate("Dialog", u"password...", None))
         self.login_button.setText(QCoreApplication.translate("Dialog", u"\u0412\u043e\u0439\u0442\u0438", None))
-        self.username_input.setText(QCoreApplication.translate("Dialog", u"\u041b\u043e\u0433\u0438\u043d", None))
+        self.username_input.setText("")
+        self.username_input.setPlaceholderText(QCoreApplication.translate("Dialog", u"login...", None))
         self.error_label.setText("")
     # retranslateUi
 

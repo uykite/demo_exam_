@@ -1,6 +1,29 @@
 from database import get_connection
 from psycopg2.extras import RealDictCursor
 
+
+
+def delete_product(product_id):
+    connection = get_connection()
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM products
+                WHERE id = %s
+                """,
+                (product_id,)
+                
+            )
+            connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
 def get_products(search="", category=None, supplier=None ,sort="Без сортировки"):
     connection = get_connection()
     if sort == "Название":

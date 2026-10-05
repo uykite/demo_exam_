@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QFileDialog
 from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtCore import Qt
-from PySide6.QtCore import QFile
+from PySide6.QtCore import QFile, QDate
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QApplication,
@@ -18,11 +18,23 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QComboBox,
-    QTextEdit
+    QTextEdit,
+    QMessageBox,
+    QDateEdit
 )
 
 
-from products import get_products, get_categories, get_manufactures, get_suppliers, add_product, get_product, update_product
+from products import get_products, get_categories, get_manufactures, get_suppliers, add_product, get_product, update_product, delete_product
+from orders import (
+    get_orders,
+    get_order_products,
+    get_order_statuses,
+    get_pickup_points,
+    add_order,
+    get_order,
+    update_order,
+    delete_order
+)
 from auth import get_user, check_password
 
 
@@ -50,12 +62,19 @@ class MainWindow(QMainWindow):
         login_path = project_path / "ui" / "login.ui"
         products_path = project_path / "ui" / "products.ui"
         add_product_path = project_path/ "ui" / "add_product.ui"
+        order_path = project_path / "ui" / "orders.ui"
+        order_form_path = project_path/ "ui" / "order_form.ui"
+        
         self.selected_image_path = None
         self.editing_product_image_path = None
+        self.editing_order_id = None
         self.editing_product_id = None
         self.login_window = load_ui(login_path)
         self.products_window = load_ui(products_path)
         self.add_product_window = load_ui(add_product_path)
+        self.orders_window = load_ui(order_path)
+        self.order_form_window = load_ui(order_form_path)
+        
         
         self.username_input = self.login_window.findChild(
             QLineEdit,
@@ -195,9 +214,77 @@ class MainWindow(QMainWindow):
             "supplier_filter"
         )
         
+        self.orders_button = self.products_window.findChild(
+            QPushButton,
+            "orders_button"
+        )
+        
+        self.orders_table = self.orders_window.findChild(
+            QTableWidget,
+            "orders_table"
+        )
+
+        self.add_order_button = self.orders_window.findChild(
+            QPushButton,
+            "add_order_button"
+        )
+
+        self.edit_order_button = self.orders_window.findChild(
+            QPushButton,
+            "edit_order_button"
+        )
+
+        self.delete_order_button = self.orders_window.findChild(
+            QPushButton,
+            "delete_order_button"
+        )
+        
+        self.back_orders_button = self.orders_window.findChild(
+            QPushButton,
+            "back_button"
+        )
+        
+        self.order_product_combo = self.order_form_window.findChild(
+            QComboBox,
+            "product_combo"
+        )
+
+        self.order_status_combo = self.order_form_window.findChild(
+            QComboBox,
+            "status_combo"
+        )
+
+        self.order_pickup_point_combo = self.order_form_window.findChild(
+            QComboBox,
+            "pickup_point_combo"
+        )
+
+        self.order_date_input = self.order_form_window.findChild(
+            QDateEdit,
+            "order_date_input"
+        )
+
+        self.order_pickup_date_input = self.order_form_window.findChild(
+            QDateEdit,
+            "pickup_date_input"
+        )
+
+        self.save_order_button = self.order_form_window.findChild(
+            QPushButton,
+            "save_order_button"
+        )
+
+        self.cancel_order_button = self.order_form_window.findChild(
+            QPushButton,
+            "cancel_order_button"
+        )
+        
+
 
         self.stack.addWidget(self.login_window)
         self.stack.addWidget(self.products_window)
+        self.stack.addWidget(self.orders_window)
+        self.stack.addWidget(self.order_form_window)
 
         self.stack.setCurrentWidget(self.login_window)
 
@@ -215,7 +302,331 @@ class MainWindow(QMainWindow):
         self.logout_button.clicked.connect(self.logout)
         self.supplier_filter.currentIndexChanged.connect(self.load_products)
         self.edit_product_button.clicked.connect(self.open_edit_product)
+        self.delete_product_button.clicked.connect(self.delete_selected_product)
+        self.orders_button.clicked.connect(self.open_orders)
+        self.back_orders_button.clicked.connect(self.open_products)
+        
+        self.cancel_order_button.clicked.connect(self.open_orders)
+        self.add_order_button.clicked.connect(self.open_add_order)
+        self.save_order_button.clicked.connect(self.save_order)
+        self.edit_order_button.clicked.connect(self.open_edit_order)
+        self.delete_order_button.clicked.connect(self.delete_selected_order)
+      
+      
+    def delete_selected_order(self):
+        selected_row = self.orders_table.currentRow()
 
+        if selected_row < 0:
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Выберите заказ для удаления."
+            )
+            return
+
+        item = self.orders_table.item(selected_row, 0)
+        order_id = item.data(Qt.UserRole)
+
+        reply = QMessageBox.question(
+            self,
+            "Удаление заказа",
+            "Вы действительно хотите удалить выбранный заказ?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply != QMessageBox.Yes:
+            return
+
+        try:
+            delete_order(order_id)
+
+            QMessageBox.information(
+                self,
+                "Успешно",
+                "Заказ успешно удалён."
+            )
+
+            self.load_orders()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Не удалось удалить заказ:\n{e}"
+            )
+      
+    def open_edit_order(self):
+        selected_row = self.orders_table.currentRow()
+
+        if selected_row < 0:
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Выберите заказ для редактирования."
+            )
+            return
+
+        item = self.orders_table.item(selected_row, 0)
+        order_id = item.data(Qt.UserRole)
+
+        order = get_order(order_id)
+
+        if order is None:
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Заказ не найден."
+            )
+            return
+
+        self.editing_order_id = order_id
+
+        self.load_order_form_data()
+
+        self.order_product_combo.setCurrentIndex(
+            self.order_product_combo.findData(order["product_id"])
+        )
+
+        self.order_status_combo.setCurrentIndex(
+            self.order_status_combo.findData(order["status_id"])
+        )
+
+        self.order_pickup_point_combo.setCurrentIndex(
+            self.order_pickup_point_combo.findData(order["pickup_point_id"])
+        )
+
+        order_date = order["order_date"]
+        pickup_date = order["pickup_date"]
+
+        self.order_date_input.setDate(
+            QDate(
+                order_date.year,
+                order_date.month,
+                order_date.day
+            )
+        )
+
+        self.order_pickup_date_input.setDate(
+            QDate(
+                pickup_date.year,
+                pickup_date.month,
+                pickup_date.day
+            )
+        )
+
+        self.order_form_window.findChild(
+            QLabel,
+            "title_label"
+        ).setText("Редактирование заказа")
+
+        self.stack.setCurrentWidget(self.order_form_window)
+      
+    def save_order(self):
+        try:
+            product_id = self.order_product_combo.currentData()
+            status_id = self.order_status_combo.currentData()
+            pickup_point_id = self.order_pickup_point_combo.currentData()
+
+            order_date = self.order_date_input.date().toString("yyyy-MM-dd")
+            pickup_date = self.order_pickup_date_input.date().toString("yyyy-MM-dd")
+
+            if product_id is None:
+                QMessageBox.warning(self, "Ошибка", "Выберите товар.")
+                return
+
+            if status_id is None:
+                QMessageBox.warning(self, "Ошибка", "Выберите статус.")
+                return
+
+            if pickup_point_id is None:
+                QMessageBox.warning(self, "Ошибка", "Выберите пункт выдачи.")
+                return
+
+            if self.editing_order_id is None:
+                add_order(
+                    product_id,
+                    status_id,
+                    pickup_point_id,
+                    order_date,
+                    pickup_date
+                )
+
+                message = "Заказ успешно добавлен."
+
+            else:
+                update_order(
+                    self.editing_order_id,
+                    product_id,
+                    status_id,
+                    pickup_point_id,
+                    order_date,
+                    pickup_date
+                )
+
+                message = "Заказ успешно изменён."
+
+            QMessageBox.information(
+                self,
+                "Успешно",
+                message
+            )
+
+            self.editing_order_id = None
+            self.open_orders()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Не удалось сохранить заказ:\n{e}"
+            )
+    
+      
+    def load_order_form_data(self):
+        try:
+            products = get_order_products()
+            statuses = get_order_statuses()
+            pickup_points = get_pickup_points()
+                
+            self.order_product_combo.clear()
+            self.order_status_combo.clear()
+            self.order_pickup_point_combo.clear()    
+            
+            for product in products:
+                self.order_product_combo.addItem(
+                    product["name"],
+                    product["id"]
+                )
+            for status in statuses:
+                self.order_status_combo.addItem(
+                    status["name"],
+                    status["id"]
+                )
+
+            for point in pickup_points:
+                self.order_pickup_point_combo.addItem(
+                    point["address"],
+                    point["id"]
+                )
+        except Exception as e:
+            print("Ошибка при загрузке формы заказов:",e)
+                
+      
+    def open_add_order(self):
+        self.editing_order_id = None
+
+        self.load_order_form_data()
+
+        self.order_form_window.findChild(
+            QLabel,
+            "title_label"
+        ).setText("Добавление заказа")
+
+        self.stack.setCurrentWidget(self.order_form_window)
+      
+    def open_products(self):
+        self.stack.setCurrentWidget(self.products_window)
+
+    def open_orders(self):
+        self.load_orders()
+        self.stack.setCurrentWidget(self.orders_window)
+      
+      
+    def load_orders(self):
+        try:
+            orders = get_orders()
+            
+            self.orders_table.setRowCount(0)
+            
+            for order in orders:
+                row = self.orders_table.rowCount()
+                self.orders_table.insertRow(row)
+                
+                item = QTableWidgetItem(order["product_name"])
+                item.setData(Qt.UserRole, order["id"])
+                self.orders_table.setItem(row,0,item)
+                
+                self.orders_table.setItem(
+                    row,
+                    1,
+                    QTableWidgetItem(order["status_name"])
+                )     
+
+                self.orders_table.setItem(
+                    row,
+                    2,
+                    QTableWidgetItem(order["pickup_address"])
+                )
+
+                self.orders_table.setItem(
+                    row,
+                    3,
+                    QTableWidgetItem(str(order["order_date"]))
+                )
+
+                self.orders_table.setItem(
+                    row,
+                    4,
+                    QTableWidgetItem(str(order["pickup_date"]))
+                )
+        except Exception as e:
+            print("Ошибки при загрузке заказов: ",e)
+                
+                
+    def delete_selected_product(self):
+        row = self.products_table.currentRow()
+        
+        if row < 0:
+            QMessageBox.warning(
+                self,
+                "Удаление товара",
+                "Сначала выберите товар"
+            )
+            return
+        item = self.products_table.item(row,0)
+        
+        if item is None:
+            QMessageBox.warning(
+                self,
+                "Удаление товара",
+                "Не удалось определить выбранный товар"
+            )
+            return
+        
+        product_id = item.data(Qt.UserRole)
+        product_name = self.products_table.item(row,1).text()
+        
+        answer = QMessageBox.question(
+            self,
+            "Удаление товара",
+            f"Вы действительно хотите удалить товар: {product_name} ?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if answer != QMessageBox.Yes:
+            return
+        
+        try:
+            delete_product(product_id)
+            
+            QMessageBox.information(
+                self,
+                "Удаление товара",
+                "Товар успешно удален"
+            )
+            self.load_products(
+            )
+        except Exception as e:
+            print("Ошибка удаление товара: ", e)
+            
+            QMessageBox.warning(
+                self,
+                "Ошибка удаления",
+                "Нельзя удалить этот товар.\n"
+                "Возможно, он уже используется в заказе."
+            )
+    
+    
     def logout(self):
         self.current_user = None
         
@@ -268,56 +679,110 @@ class MainWindow(QMainWindow):
         discount_text = self.product_discount_input.text().strip()
 
         if not name:
-            print("Ошибка: не указано название товара")
+
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Введите название товара."
+            )
+
             return
 
         if category_id is None:
-            print("Ошибка: не выбрана категория")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Выберите категорию."
+            )
+
             return
 
         if manufacturer_id is None:
-            print("Ошибка: не выбран производитель")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Выберите производителя."
+            )
+
             return
 
         if supplier_id is None:
-            print("Ошибка: не выбран поставщик")
+
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Выберите поставщика."
+            )
+
             return
 
         if not unit:
-            print("Ошибка: не указана единица измерения")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Введите единицу измерения."
+            )
+
             return
 
         # Проверяем цену
         try:
             price = float(price_text)
         except ValueError:
-            print("Ошибка: цена должна быть числом")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Цена должна быть числом."
+            )
+
             return
 
         if price < 0:
-            print("Ошибка: цена не может быть отрицательной")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Цена не может быть отрицательной."
+            )
             return
 
         # Проверяем количество
         try:
             stock_quantity = int(stock_text)
         except ValueError:
-            print("Ошибка: количество должно быть целым числом")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Количество должно быть целым числом."
+            )
+
             return
 
         if stock_quantity < 0:
-            print("Ошибка: количество не может быть отрицательным")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Количество не может быть отрицательным."
+            )
             return
 
         # Проверяем скидку
         try:
             discount = float(discount_text)
         except ValueError:
-            print("Ошибка: скидка должна быть числом")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Скидка должна быть числом."
+            )
+
             return
 
         if discount < 0 or discount > 100:
-            print("Ошибка: скидка должна быть от 0 до 100")
+            QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Скидка должна быть от 0 до 100%."
+            )
             return
 
 
@@ -383,6 +848,7 @@ class MainWindow(QMainWindow):
     def open_add_product(self):
         self.editing_product_id = None
         self.selected_image_path = None
+        self.editing_product_image_path = None
 
         self.add_product_window.setWindowTitle("Добавление товара")
         self.product_image_label.clear()
@@ -542,6 +1008,11 @@ class MainWindow(QMainWindow):
         self.add_product_button.setVisible(is_admin)
         self.edit_product_button.setVisible(is_admin)
         self.delete_product_button.setVisible(is_admin)
+        self.orders_button.setVisible(is_admin or is_manager)
+        self.add_order_button.setVisible(is_admin)
+        self.edit_order_button.setVisible(is_admin)
+        self.delete_order_button.setVisible(is_admin)
+        
         
     def load_products(self):
         try:
@@ -707,6 +1178,9 @@ class MainWindow(QMainWindow):
                 
         except Exception as e:
             print("Error: ", e)
+    
+    
+    
             
     def open_edit_product(self):
         row = self.products_table.currentRow()

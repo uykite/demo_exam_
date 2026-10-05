@@ -235,6 +235,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="orders_button">
+            <property name="text">
+             <string>Заказы</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
